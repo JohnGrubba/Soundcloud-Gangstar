@@ -104,14 +104,21 @@ func fetchPlaylistTracks(scurl string) {
 		// Get M3U Thingy
 		raw := getM3UContents(baseURL, track_auth)
 
+		fmt.Println(string(body))
 		// Extract Song Details
 		songTitle, err := jsonparser.GetString(body, "[0]", "title")
+		artworkURL, err := jsonparser.GetString(body, "[0]", "artwork_url")
+		artist, err := jsonparser.GetString(body, "[0]", "user", "username")
 		if err != nil {
 			fmt.Println("Error extracting Title (Strange Error)")
 			return
 		}
+		// Fetch Artwork Image
+		image, _ := http.Get(artworkURL)
+		image_body, _ := io.ReadAll(image.Body)
 		fmt.Println("Song", songTitle, "with format", format)
-		downloadFileFromM3U("songs/"+songTitle, raw)
+		filaneme := downloadFileFromM3U("songs/"+songTitle, raw)
+		writeFileTags(filaneme, artist, songTitle, track_id, image_body)
 		fmt.Println("-----------------Downloaded------------------")
 	}, "[8]", "data", "tracks")
 

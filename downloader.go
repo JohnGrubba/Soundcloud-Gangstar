@@ -4,15 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
-
-	"github.com/PuerkitoBio/goquery"
-	"github.com/buger/jsonparser"
-	"github.com/joho/godotenv"
 )
 
 func getM3UContents(baseURL string, track_authorization string) []byte {
@@ -72,7 +67,7 @@ func getM3UContents(baseURL string, track_authorization string) []byte {
 	return raw
 }
 
-func downloadFileFromM3U(filename string, raw []byte) {
+func downloadFileFromM3U(filename string, raw []byte) string {
 	cookie := os.Getenv("COOKIE")
 	cookieParts := strings.Split(cookie, "oauth_token=")
 	oauthTkn := strings.Split(cookieParts[1], ";")[0]
@@ -80,7 +75,7 @@ func downloadFileFromM3U(filename string, raw []byte) {
 	f, err := os.Create(filename + ".wav")
 	if err != nil {
 		fmt.Println("Error creating music file:", err)
-		return
+		return ""
 	}
 	defer f.Close()
 
@@ -99,14 +94,14 @@ func downloadFileFromM3U(filename string, raw []byte) {
 	req, err := http.NewRequest("GET", initURL, nil)
 	if err != nil {
 		fmt.Println("Error creating GET request:", err)
-		return
+		return ""
 	}
 	req.Header.Set("Authorization", "OAuth "+oauthTkn)
 	req.Header.Set("Cookie", cookie)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Error making GET request:", err)
-		return
+		return ""
 	}
 	defer res.Body.Close()
 
@@ -114,7 +109,7 @@ func downloadFileFromM3U(filename string, raw []byte) {
 	_, err = io.Copy(f, res.Body)
 	if err != nil {
 		fmt.Println("Error writing initialization data to music file:", err)
-		return
+		return ""
 	}
 
 	// Download the remaining segments of the music file
@@ -123,14 +118,14 @@ func downloadFileFromM3U(filename string, raw []byte) {
 			req, err = http.NewRequest("GET", line, nil)
 			if err != nil {
 				fmt.Println("Error creating GET request:", err)
-				return
+				return ""
 			}
 			req.Header.Set("Authorization", "OAuth "+cookie)
 			req.Header.Set("Cookie", cookie)
 			res, err = http.DefaultClient.Do(req)
 			if err != nil {
 				fmt.Println("Error making GET request:", err)
-				return
+				return ""
 			}
 			defer res.Body.Close()
 
@@ -138,83 +133,9 @@ func downloadFileFromM3U(filename string, raw []byte) {
 			_, err = io.Copy(f, res.Body)
 			if err != nil {
 				fmt.Println("Error writing segment data to music file:", err)
-				return
+				return ""
 			}
 		}
 	}
-}
-
-func downloadFromURL(scurl string) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	cookie := os.Getenv("COOKIE")
-	cookieParts := strings.Split(cookie, "oauth_token=")
-	oauthTkn := strings.Split(cookieParts[1], ";")[0]
-
-	// Make HTTP GET request to the initial URL
-	req, err := http.NewRequest("GET", scurl, nil)
-	if err != nil {
-		fmt.Println("Error creating GET request:", err)
-		return
-	}
-	req.Header.Set("Authorization", "OAuth "+oauthTkn)
-	req.Header.Set("Cookie", cookie)
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Println("Error making GET request for m3ufilegetting:", err)
-		return
-	}
-	defer res.Body.Close()
-
-	// Parse the HTML response
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		fmt.Println("Error parsing HTML:", err)
-		return
-	}
-
-	// Find all script tags in the HTML
-	var js string
-	doc.Find("script").Each(func(i int, s *goquery.Selection) {
-		script := s.Text()
-		if strings.Contains(script, "window.__sc_hydration") {
-			js = strings.TrimPrefix(script, "window.__sc_hydration = ")
-			js = strings.TrimSuffix(js, ";")
-			return
-		}
-	})
-
-	// Parse the JSON data from the script tag
-	fmt.Println(js)
-
-	// Get the URL of the best quality song
-	bestQuality, err := jsonparser.GetString([]byte(js), "[8]", "data", "media", "transcodings", "[0]", "url")
-	if err != nil {
-		fmt.Println("Error parsing JSON1:", err)
-		return
-	}
-	baseURL := bestQuality
-
-	track_auth, err := jsonparser.GetString([]byte(js), "[8]", "data", "track_authorization")
-	if err != nil {
-		fmt.Println("Error parsing JSON2:", err)
-		return
-	}
-
-	// Extract Song Details
-	songTitle, err := jsonparser.GetString([]byte(js), "[8]", "data", "title")
-	if err != nil {
-		fmt.Println("Error extracting Title (Strange Error)")
-		return
-	}
-
-	// GET M3U Contents
-	raw := getM3UContents(baseURL, track_auth)
-
-	downloadFileFromM3U(songTitle, raw)
-
-	fmt.Println("Music file downloaded successfully")
+	return filename + ".wav"
 }
