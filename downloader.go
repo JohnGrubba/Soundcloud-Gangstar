@@ -67,15 +67,33 @@ func getM3UContents(baseURL string, track_authorization string) []byte {
 	return raw
 }
 
-func downloadFileFromM3U(filename string, raw []byte) string {
+func downloadFileFromM3U(filename string, raw []byte, playlistFileDir string) string {
+	// Parse Filename (remove any illegal characters)
+	filename = strings.ReplaceAll(filename, "/", "")
+	filename = strings.ReplaceAll(filename, "\\", "")
+	filename = strings.ReplaceAll(filename, ":", "")
+	filename = strings.ReplaceAll(filename, "*", "")
+	filename = strings.ReplaceAll(filename, "?", "")
+	filename = strings.ReplaceAll(filename, "\"", "")
+	filename = strings.ReplaceAll(filename, "<", "")
+	filename = strings.ReplaceAll(filename, ">", "")
+	filename = strings.ReplaceAll(filename, "|", "")
+
+	filename = playlistFileDir + "/" + filename
+	// Get the OAuth token from the cookie
 	cookie := os.Getenv("COOKIE")
 	cookieParts := strings.Split(cookie, "oauth_token=")
 	oauthTkn := strings.Split(cookieParts[1], ";")[0]
 	// Write the music file
+	// Check if the file already exists
+	if _, err := os.Stat(filename + ".wav"); err == nil {
+		fmt.Println("Already in Library")
+		return filename + ".wav"
+	}
 	f, err := os.Create(filename + ".wav")
 	if err != nil {
 		fmt.Println("Error creating music file:", err)
-		return ""
+		return "error"
 	}
 	defer f.Close()
 
@@ -94,14 +112,14 @@ func downloadFileFromM3U(filename string, raw []byte) string {
 	req, err := http.NewRequest("GET", initURL, nil)
 	if err != nil {
 		fmt.Println("Error creating GET request:", err)
-		return ""
+		return "error"
 	}
 	req.Header.Set("Authorization", "OAuth "+oauthTkn)
 	req.Header.Set("Cookie", cookie)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Error making GET request:", err)
-		return ""
+		return "error"
 	}
 	defer res.Body.Close()
 
@@ -109,7 +127,7 @@ func downloadFileFromM3U(filename string, raw []byte) string {
 	_, err = io.Copy(f, res.Body)
 	if err != nil {
 		fmt.Println("Error writing initialization data to music file:", err)
-		return ""
+		return "error"
 	}
 
 	// Download the remaining segments of the music file
@@ -118,14 +136,14 @@ func downloadFileFromM3U(filename string, raw []byte) string {
 			req, err = http.NewRequest("GET", line, nil)
 			if err != nil {
 				fmt.Println("Error creating GET request:", err)
-				return ""
+				return "error"
 			}
 			req.Header.Set("Authorization", "OAuth "+cookie)
 			req.Header.Set("Cookie", cookie)
 			res, err = http.DefaultClient.Do(req)
 			if err != nil {
 				fmt.Println("Error making GET request:", err)
-				return ""
+				return "error"
 			}
 			defer res.Body.Close()
 
@@ -133,7 +151,7 @@ func downloadFileFromM3U(filename string, raw []byte) string {
 			_, err = io.Copy(f, res.Body)
 			if err != nil {
 				fmt.Println("Error writing segment data to music file:", err)
-				return ""
+				return "error"
 			}
 		}
 	}

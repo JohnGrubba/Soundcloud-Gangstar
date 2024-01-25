@@ -10,10 +10,11 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/buger/jsonparser"
+	"github.com/fatih/color"
 	"github.com/joho/godotenv"
 )
 
-func fetchPlaylistTracks(scurl string) {
+func fetchPlaylistTracks(scurl string, playlistFileDir string) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -57,12 +58,26 @@ func fetchPlaylistTracks(scurl string) {
 		}
 	})
 
+	track_ids := make([]int64, 0)
+
 	_, _ = jsonparser.ArrayEach([]byte(js), func(value []byte, dataType jsonparser.ValueType, offset int, _ error) {
 		track_id, err := jsonparser.GetInt(value, "id")
 		if err != nil {
 			fmt.Println("Error getting track id:", err)
 			return
 		}
+		track_ids = append(track_ids, track_id)
+	}, "[8]", "data", "tracks")
+
+	// Reverse the track_ids slice
+	for i, j := 0, len(track_ids)-1; i < j; i, j = i+1, j-1 {
+		track_ids[i], track_ids[j] = track_ids[j], track_ids[i]
+	}
+
+	errored_urls := make([]string, 0)
+
+	// Loop over track_ids
+	for _, track_id := range track_ids {
 		fmt.Println(track_id)
 
 		// Fetch more track information
@@ -104,22 +119,25 @@ func fetchPlaylistTracks(scurl string) {
 		// Get M3U Thingy
 		raw := getM3UContents(baseURL, track_auth)
 
-		fmt.Println(string(body))
+		// fmt.Println(string(body))
 		// Extract Song Details
-		songTitle, err := jsonparser.GetString(body, "[0]", "title")
-		artworkURL, err := jsonparser.GetString(body, "[0]", "artwork_url")
-		artist, err := jsonparser.GetString(body, "[0]", "user", "username")
+		songTitle, _ := jsonparser.GetString(body, "[0]", "title")
 		if err != nil {
 			fmt.Println("Error extracting Title (Strange Error)")
 			return
 		}
-		// Fetch Artwork Image
-		image, _ := http.Get(artworkURL)
-		image_body, _ := io.ReadAll(image.Body)
-		fmt.Println("Song", songTitle, "with format", format)
-		filaneme := downloadFileFromM3U("songs/"+songTitle, raw)
-		writeFileTags(filaneme, artist, songTitle, track_id, image_body)
-		fmt.Println("-----------------Downloaded------------------")
-	}, "[8]", "data", "tracks")
-
+		color.Blue("Song " + songTitle + " with format " + format)
+		status := downloadFileFromM3U(songTitle, raw, playlistFileDir)
+		if status == "error" {
+			color.Red("Error downloading song")
+			// Append to errored_urls
+			errored_urls = append(errored_urls, songTitle)
+		}
+		_ = errored_urls // Fix for go-staticcheck SA4010
+		color.Blue("-----------------Downloaded------------------")
+	}
+	color.Red("Errored URLs:")
+	for _, url := range errored_urls {
+		color.Red(url)
+	}
 }
