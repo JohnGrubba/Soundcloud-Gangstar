@@ -88,7 +88,7 @@ func downloadFileFromM3U(filename string, raw []byte, playlistFileDir string) st
 	// Check if the file already exists
 	if _, err := os.Stat(filename + ".wav"); err == nil {
 		fmt.Println("Already in Library")
-		return filename + ".wav"
+		return "exists"
 	}
 	f, err := os.Create(filename + ".wav")
 	if err != nil {

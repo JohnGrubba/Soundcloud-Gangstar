@@ -14,7 +14,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func fetchPlaylistTracks(scurl string, playlistFileDir string) {
+// Downloads or refreshes the playlist
+func fetchPlaylistTracks(scurl string, playlistFileDir string, refresh bool) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -133,11 +134,17 @@ func fetchPlaylistTracks(scurl string, playlistFileDir string) {
 			// Append to errored_urls
 			errored_urls = append(errored_urls, songTitle)
 		}
+		if status == "exists" && refresh {
+			color.Green("Downloaded all new Songs (Refreshed Playlist)")
+			break
+		}
 		_ = errored_urls // Fix for go-staticcheck SA4010
 		color.Blue("-----------------Downloaded------------------")
 	}
-	color.Red("Errored URLs:")
-	for _, url := range errored_urls {
-		color.Red(url)
+	if len(errored_urls) > 0 {
+		color.Red("Errored URLs:")
+		for _, url := range errored_urls {
+			color.Red(url)
+		}
 	}
 }
