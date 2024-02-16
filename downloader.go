@@ -85,10 +85,6 @@ func parseFilename(filename_in string, playlistFileDir string) string {
 
 func downloadFileFromM3U(filename string, raw []byte, playlistFileDir string) string {
 	filename = parseFilename(filename, playlistFileDir)
-	// Get the OAuth token from the cookie
-	cookie := os.Getenv("COOKIE")
-	cookieParts := strings.Split(cookie, "oauth_token=")
-	oauthTkn := strings.Split(cookieParts[1], ";")[0]
 	// Write the music file
 	// Check if the file already exists
 	if _, err := os.Stat(filename); err == nil {
@@ -101,63 +97,13 @@ func downloadFileFromM3U(filename string, raw []byte, playlistFileDir string) st
 		return "error"
 	}
 	defer f.Close()
-	// Extract the initialization URL from the M3U file
-	initURL := ""
-	lines := strings.Split(string(raw), "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "#EXT-X-MAP:URI") {
-			initURL = strings.ReplaceAll(line, "#EXT-X-MAP:URI=\"", "")
-			initURL = strings.ReplaceAll(initURL, "\"", "")
-			break
-		}
-	}
 
-	// Make HTTP GET request to the initialization URL
-	req, err := http.NewRequest("GET", initURL, nil)
+	// Write raw into file
+	_, err = f.Write(raw)
 	if err != nil {
-		fmt.Println("Error creating GET request:", err)
-		return "error"
-	}
-	req.Header.Set("Authorization", "OAuth "+oauthTkn)
-	req.Header.Set("Cookie", cookie)
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Println("Error making GET request:", err)
-		return "error"
-	}
-	defer res.Body.Close()
-
-	// Write the initialization data to the music file
-	_, err = io.Copy(f, res.Body)
-	if err != nil {
-		fmt.Println("Error writing initialization data to music file:", err)
+		fmt.Println("Error writing music file:", err)
 		return "error"
 	}
 
-	// Download the remaining segments of the music file
-	for _, line := range lines {
-		if !strings.HasPrefix(line, "#") {
-			req, err = http.NewRequest("GET", line, nil)
-			if err != nil {
-				fmt.Println("Error creating GET request:", err)
-				return "error"
-			}
-			req.Header.Set("Authorization", "OAuth "+cookie)
-			req.Header.Set("Cookie", cookie)
-			res, err = http.DefaultClient.Do(req)
-			if err != nil {
-				fmt.Println("Error making GET request:", err)
-				return "error"
-			}
-			defer res.Body.Close()
-
-			// Write the segment data to the music file
-			_, err = io.Copy(f, res.Body)
-			if err != nil {
-				fmt.Println("Error writing segment data to music file:", err)
-				return "error"
-			}
-		}
-	}
 	return filename + ".wav"
 }

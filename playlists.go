@@ -115,10 +115,10 @@ func fetchPlaylistTracks(scurl string, playlistFileDir string, refresh bool) {
 	for _, track_id := range track_ids {
 		body := fetchTrackInformationFromID(track_id)
 		// Get the URL of the best quality song
-		bestQuality, _ := jsonparser.GetString([]byte(body), "[0]", "media", "transcodings", "[0]", "url")
-		format, err := jsonparser.GetString(body, "[0]", "media", "transcodings", "[0]", "quality")
-		if err != nil {
-			fmt.Println("Error parsing JSON1:", err)
+		bestQuality, _ := jsonparser.GetString([]byte(body), "[0]", "media", "transcodings", "[1]", "url")
+		format, err := jsonparser.GetString(body, "[0]", "media", "transcodings", "[1]", "quality")
+		if err != nil || format != "hq" {
+			fmt.Println("Error parsing JSON1 (or Format to baaad):", err)
 			return
 		}
 		track_auth, err := jsonparser.GetString(body, "[0]", "track_authorization")
