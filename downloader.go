@@ -67,9 +67,9 @@ func getM3UContents(baseURL string, track_authorization string) []byte {
 	return raw
 }
 
-func downloadFileFromM3U(filename string, raw []byte, playlistFileDir string) string {
+func parseFilename(filename_in string, playlistFileDir string) string {
 	// Parse Filename (remove any illegal characters)
-	filename = strings.ReplaceAll(filename, "/", "")
+	filename := strings.ReplaceAll(filename_in, "/", "")
 	filename = strings.ReplaceAll(filename, "\\", "")
 	filename = strings.ReplaceAll(filename, ":", "")
 	filename = strings.ReplaceAll(filename, "*", "")
@@ -79,24 +79,28 @@ func downloadFileFromM3U(filename string, raw []byte, playlistFileDir string) st
 	filename = strings.ReplaceAll(filename, ">", "")
 	filename = strings.ReplaceAll(filename, "|", "")
 
-	filename = playlistFileDir + "/" + filename
+	filename = playlistFileDir + "/" + filename + ".wav"
+	return filename
+}
+
+func downloadFileFromM3U(filename string, raw []byte, playlistFileDir string) string {
+	filename = parseFilename(filename, playlistFileDir)
 	// Get the OAuth token from the cookie
 	cookie := os.Getenv("COOKIE")
 	cookieParts := strings.Split(cookie, "oauth_token=")
 	oauthTkn := strings.Split(cookieParts[1], ";")[0]
 	// Write the music file
 	// Check if the file already exists
-	if _, err := os.Stat(filename + ".wav"); err == nil {
+	if _, err := os.Stat(filename); err == nil {
 		fmt.Println("Already in Library")
 		return "exists"
 	}
-	f, err := os.Create(filename + ".wav")
+	f, err := os.Create(filename)
 	if err != nil {
 		fmt.Println("Error creating music file:", err)
 		return "error"
 	}
 	defer f.Close()
-
 	// Extract the initialization URL from the M3U file
 	initURL := ""
 	lines := strings.Split(string(raw), "\n")
