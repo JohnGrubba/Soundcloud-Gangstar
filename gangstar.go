@@ -38,7 +38,8 @@ func main() {
 		fmt.Println("Welcome to Gangstar CLI")
 		fmt.Println("1. Refresh all Soundcloud Playlists")
 		fmt.Println("2. Compare Local Playlist with Remote Playlist")
-		fmt.Println("3. Exit")
+		fmt.Println("3. Download Single Track")
+		fmt.Println("4. Exit")
 
 		var input int
 		fmt.Scanln(&input)
@@ -80,6 +81,14 @@ func main() {
 				}
 			}
 		case 3:
+			{
+				fmt.Println("Downloading Single Track")
+				fmt.Println("Enter Soundcloud URL")
+				var url string
+				fmt.Scanln(&url)
+				downloadFromURL(url)
+			}
+		case 4:
 			{
 				fmt.Println("Exiting")
 				return

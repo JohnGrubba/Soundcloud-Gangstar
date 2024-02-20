@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func getM3UContents(baseURL string, track_authorization string) []byte {
+func getSongContent(baseURL string, track_authorization string) []byte {
 	cookie := os.Getenv("COOKIE")
 	cookieParts := strings.Split(cookie, "oauth_token=")
 	oauthTkn := strings.Split(cookieParts[1], ";")[0]
@@ -83,7 +83,7 @@ func parseFilename(filename_in string, playlistFileDir string) string {
 	return filename
 }
 
-func downloadFileFromM3U(filename string, raw []byte, playlistFileDir string) string {
+func saveFileFromRAWData(filename string, raw []byte, playlistFileDir string) string {
 	filename = parseFilename(filename, playlistFileDir)
 	// Write the music file
 	// Check if the file already exists
