@@ -85,6 +85,9 @@ func parseFilename(filename_in string, playlistFileDir string) string {
 
 func saveFileFromRAWData(filename string, raw []byte, playlistFileDir string) string {
 	filename = parseFilename(filename, playlistFileDir)
+	// Go back one directory
+	filename = "../" + filename
+
 	// Write the music file
 	// Check if the file already exists
 	if _, err := os.Stat(filename); err == nil {

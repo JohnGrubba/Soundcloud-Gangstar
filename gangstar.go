@@ -77,8 +77,7 @@ func main() {
 					for _, file := range files {
 						local_filenames = append(local_filenames, file.Name())
 					}
-					fmt.Println("Remote Filenames:", remote_filenames)
-					fmt.Println("Local Filenames:", local_filenames)
+					fmt.Println(difference(remote_filenames, local_filenames))
 				}
 			}
 		case 3:
