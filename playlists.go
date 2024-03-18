@@ -171,16 +171,31 @@ func fetchTrackInformationFromID(track_id int64) []byte {
 
 func downloadFromTrackID(track_id int64, playlistFileDir string, errored_urls *[]string, refresh bool) bool {
 	body := fetchTrackInformationFromID(track_id)
+	songTitle, err := jsonparser.GetString(body, "[0]", "title")
+	if err != nil {
+		fmt.Println("Error extracting Title (Strange Error)")
+		*errored_urls = append(*errored_urls, songTitle)
+		return false
+	}
 	// Get the URL of the best quality song
-	bestQuality, _ := jsonparser.GetString([]byte(body), "[0]", "media", "transcodings", "[1]", "url")
+	bestQuality, err1 := jsonparser.GetString([]byte(body), "[0]", "media", "transcodings", "[1]", "url")
 	format, err := jsonparser.GetString(body, "[0]", "media", "transcodings", "[1]", "quality")
-	if err != nil || format != "hq" {
-		fmt.Println("Error parsing JSON1 (or Format to baaad):", err)
+	if err != nil || err1 != nil {
+		fmt.Println("Error parsing JSON:", err)
+		*errored_urls = append(*errored_urls, songTitle)
+		return false
+	}
+	// Extract Song Details
+	color.Blue("Song " + songTitle + " with format " + format)
+	if format != "hq" {
+		fmt.Println("Skipping non-HQ song")
+		*errored_urls = append(*errored_urls, songTitle)
 		return false
 	}
 	track_auth, err := jsonparser.GetString(body, "[0]", "track_authorization")
 	if err != nil {
 		fmt.Println("Error parsing JSON2:", err)
+		*errored_urls = append(*errored_urls, songTitle)
 		return false
 	}
 	baseURL := bestQuality
@@ -189,13 +204,6 @@ func downloadFromTrackID(track_id int64, playlistFileDir string, errored_urls *[
 	raw := getSongContent(baseURL, track_auth)
 
 	// fmt.Println(string(body))
-	// Extract Song Details
-	songTitle, _ := jsonparser.GetString(body, "[0]", "title")
-	if err != nil {
-		fmt.Println("Error extracting Title (Strange Error)")
-		return false
-	}
-	color.Blue("Song " + songTitle + " with format " + format)
 	status := saveFileFromRAWData(songTitle, raw, playlistFileDir)
 	if status == "error" {
 		color.Red("Error downloading song")
