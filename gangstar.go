@@ -14,6 +14,7 @@ var playlists = map[string]string{
 	"Dubstep":   "https://soundcloud.com/jonasgrubbauer/sets/dubstep",
 	"CarSet":    "https://soundcloud.com/jonasgrubbauer/sets/goofyaahcarset",
 	"Uptempo":   "https://soundcloud.com/jonasgrubbauer/sets/hardstyle-rawstyle-1",
+	"Garage":    "https://soundcloud.com/jonasgrubbauer/sets/garage",
 }
 
 // difference returns the elements in `a` that aren't in `b`.

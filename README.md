@@ -7,3 +7,7 @@
 
 ## How do i run it?
 - Just do `go run .` and the program will startup
+
+
+## For JJ
+- Convert newly downloaded tracks to .flac to be able to play on DDJs

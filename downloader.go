@@ -79,7 +79,7 @@ func parseFilename(filename_in string, playlistFileDir string) string {
 	filename = strings.ReplaceAll(filename, ">", "")
 	filename = strings.ReplaceAll(filename, "|", "")
 
-	filename = playlistFileDir + "/" + filename + ".wav"
+	filename = playlistFileDir + "/" + filename
 	return filename
 }
 
@@ -90,11 +90,11 @@ func saveFileFromRAWData(filename string, raw []byte, playlistFileDir string) st
 
 	// Write the music file
 	// Check if the file already exists
-	if _, err := os.Stat(filename); err == nil {
+	if _, err := os.Stat(filename + ".flac"); err == nil {
 		fmt.Println("Already in Library")
 		return "exists"
 	}
-	f, err := os.Create(filename)
+	f, err := os.Create(filename + ".wav")
 	if err != nil {
 		fmt.Println("Error creating music file:", err)
 		return "error"
