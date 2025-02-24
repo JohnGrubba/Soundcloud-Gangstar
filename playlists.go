@@ -60,14 +60,35 @@ func fetchTrackIDs(scurl string) []int64 {
 
 	track_ids := make([]int64, 0)
 
-	_, _ = jsonparser.ArrayEach([]byte(js), func(value []byte, dataType jsonparser.ValueType, offset int, _ error) {
-		track_id, err := jsonparser.GetInt(value, "id")
+	found := false
+	jsonparser.ArrayEach([]byte(js), func(value []byte, dataType jsonparser.ValueType, offset int, _ error) {
+		hydratable, err := jsonparser.GetString(value, "hydratable")
 		if err != nil {
-			fmt.Println("Error getting track id:", err)
+			fmt.Println("Error getting hydratable:", err)
 			return
 		}
-		track_ids = append(track_ids, track_id)
-	}, "[8]", "data", "tracks")
+		if hydratable == "playlist" {
+			found = true
+			_, err = jsonparser.ArrayEach(value, func(trackValue []byte, dataType jsonparser.ValueType, offset int, _ error) {
+				track_id, err := jsonparser.GetInt(trackValue, "id")
+				if err != nil {
+					fmt.Println("Error getting track id:", err)
+					return
+				}
+				track_ids = append(track_ids, track_id)
+			}, "data", "tracks")
+			if err != nil {
+				fmt.Println("Error iterating tracks:", err)
+				return
+			}
+			return
+		}
+	})
+
+	if !found {
+		fmt.Println("Playlist not found")
+		return []int64{}
+	}
 
 	// Reverse the track_ids slice
 	for i, j := 0, len(track_ids)-1; i < j; i, j = i+1, j-1 {
@@ -139,6 +160,7 @@ func downloadFromTrackID(track_id int64, playlistFileDir string, errored_urls *[
 // Downloads or refreshes the playlist
 func fetchPlaylistTracks(scurl string, playlistFileDir string, refresh bool) {
 	track_urls := fetchTrackIDs(scurl)
+	fmt.Println("Total Tracks:", len(track_urls))
 
 	errored_urls := make([]string, 0)
 
