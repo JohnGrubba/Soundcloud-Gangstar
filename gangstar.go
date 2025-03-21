@@ -21,6 +21,7 @@ func main() {
 	for {
 		fmt.Println("Welcome to Gangstar CLI")
 		fmt.Println("1. Refresh all Soundcloud Playlists")
+		fmt.Println("2. Download one Track")
 		fmt.Println("4. Exit")
 
 		var input int
@@ -34,6 +35,18 @@ func main() {
 				for k, v := range playlists {
 					fetchPlaylistTracks(v, k, true)
 				}
+			}
+		case 2:
+			{
+				fmt.Println("Enter the URL of the track you want to download")
+				var url string
+				fmt.Scanln(&url)
+				oauthToken, _, err := getAuthCredentials()
+				if err != nil {
+					fmt.Println("Error getting auth credentials")
+					return
+				}
+				downloadFile(url, "./custom", oauthToken)
 			}
 		case 4:
 			{
