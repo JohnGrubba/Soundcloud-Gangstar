@@ -68,13 +68,16 @@ func downloadFile(url string, outputPath string, oauthToken string) error {
 	cmd := exec.Command(
 		"./yt-dlp.exe",
 		url,
-		"--add-header", "Authorization: OAuth "+oauthToken,
-		"-x",
+		"-f", "ba",
+		"--extract-audio",
+		"-u", "oauth",
+		"-p", oauthToken,
 		"--audio-format", outputFormat,
-		"--audio-quality", audioQuality,
 		"--concurrent-fragments", concurrentDL,
 		"--output", outputPath+"."+outputFormat,
 	)
+
+	log.Println("Executing command:", cmd.String())
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {

@@ -5,13 +5,14 @@ import (
 )
 
 var playlists = map[string]string{
-	"ColorBass": "https://soundcloud.com/jonasgrubbauer/sets/color-bass",
-	"DnB":       "https://soundcloud.com/jonasgrubbauer/sets/drum-and-bass",
-	"BassHouse": "https://soundcloud.com/jonasgrubbauer/sets/bass-house",
-	"Dubstep":   "https://soundcloud.com/jonasgrubbauer/sets/dubstep",
-	"CarSet":    "https://soundcloud.com/jonasgrubbauer/sets/goofyaahcarset",
-	"Uptempo":   "https://soundcloud.com/jonasgrubbauer/sets/hardstyle-rawstyle-1",
-	"Garage":    "https://soundcloud.com/jonasgrubbauer/sets/garage",
+	"ColorBass":     "https://soundcloud.com/jonasgrubbauer/sets/color-bass",
+	"DnB":           "https://soundcloud.com/jonasgrubbauer/sets/drum-and-bass",
+	"BassHouse":     "https://soundcloud.com/jonasgrubbauer/sets/bass-house",
+	"Dubstep":       "https://soundcloud.com/jonasgrubbauer/sets/dubstep",
+	"CarSet":        "https://soundcloud.com/jonasgrubbauer/sets/goofyaahcarset",
+	"Uptempo":       "https://soundcloud.com/jonasgrubbauer/sets/hardstyle-rawstyle-1",
+	"Garage":        "https://soundcloud.com/jonasgrubbauer/sets/garage",
+	"ElisKackMusik": "https://soundcloud.com/user-192040148/sets/elis-schwanz-musik",
 }
 
 func main() {
@@ -19,6 +20,13 @@ func main() {
 	// Display menu and ask user for action
 
 	for {
+		oauthToken, _, err := getAuthCredentials()
+		fmt.Println("Gangstar CLI")
+		if err != nil {
+			fmt.Println("Error getting auth credentials")
+			return
+		}
+		fmt.Println("OAuth Token:", oauthToken)
 		fmt.Println("Welcome to Gangstar CLI")
 		fmt.Println("1. Refresh all Soundcloud Playlists")
 		fmt.Println("2. Download one Track")
